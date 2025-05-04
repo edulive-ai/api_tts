@@ -1,0 +1,14 @@
+2025-05-04 15:27:57,306 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: name 'requests' is not defined
+2025-05-04 15:27:57,306 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: name 'requests' is not defined
+2025-05-04 15:27:57,306 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: name 'requests' is not defined
+2025-05-04 15:27:57,306 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: name 'requests' is not defined
+2025-05-04 15:28:00,846 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: name 'requests' is not defined
+2025-05-04 15:29:01,193 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:1010
+ * Running on http://172.17.0.2:1010
+2025-05-04 15:29:01,193 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-04 15:37:56,430 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: 400 Client Error: Bad Request for url: https://api.telegram.org/bot7229732085:AAFgY92Mq6OyviShR-NuYlQ50Hs4BuJ2Uog/sendMessage
+2025-05-04 15:38:01,562 - werkzeug - INFO - 127.0.0.1 - - [04/May/2025 15:38:01] "POST /tts HTTP/1.1" 200 -
+2025-05-04 15:40:09,437 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: 400 Client Error: Bad Request for url: https://api.telegram.org/bot7229732085:AAFgY92Mq6OyviShR-NuYlQ50Hs4BuJ2Uog/sendMessage
+2025-05-04 15:40:14,313 - werkzeug - INFO - 127.0.0.1 - - [04/May/2025 15:40:14] "POST /tts HTTP/1.1" 200 -

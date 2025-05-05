@@ -18,7 +18,7 @@ sudo apt-get install -y libsndfile1-dev
 
 ```bash
 # Create a new conda environment
-conda create -n tts_env python=3.8
+conda create -n tts_env python=3.10
 conda activate tts_env
 ```
 

@@ -12,3 +12,19 @@
 2025-05-04 15:38:01,562 - werkzeug - INFO - 127.0.0.1 - - [04/May/2025 15:38:01] "POST /tts HTTP/1.1" 200 -
 2025-05-04 15:40:09,437 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: 400 Client Error: Bad Request for url: https://api.telegram.org/bot7229732085:AAFgY92Mq6OyviShR-NuYlQ50Hs4BuJ2Uog/sendMessage
 2025-05-04 15:40:14,313 - werkzeug - INFO - 127.0.0.1 - - [04/May/2025 15:40:14] "POST /tts HTTP/1.1" 200 -
+2025-05-04 15:45:07,978 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:1010
+ * Running on http://172.17.0.2:1010
+2025-05-04 15:45:07,978 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-04 15:45:55,668 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: 400 Client Error: Bad Request for url: https://api.telegram.org/bot7229732085:AAFgY92Mq6OyviShR-NuYlQ50Hs4BuJ2Uog/sendMessage
+2025-05-04 15:46:00,721 - werkzeug - INFO - 127.0.0.1 - - [04/May/2025 15:46:00] "POST /tts HTTP/1.1" 200 -
+2025-05-04 15:46:25,701 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: 400 Client Error: Bad Request for url: https://api.telegram.org/bot7229732085:AAFgY92Mq6OyviShR-NuYlQ50Hs4BuJ2Uog/sendMessage
+2025-05-04 15:46:30,507 - werkzeug - INFO - 127.0.0.1 - - [04/May/2025 15:46:30] "POST /tts HTTP/1.1" 200 -
+2025-05-05 01:02:36,913 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:9321
+ * Running on http://172.17.0.2:9321
+2025-05-05 01:02:36,913 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-05 01:03:29,532 - vndoc-crawler - ERROR - Lỗi khi gửi tin nhắn Telegram: 400 Client Error: Bad Request for url: https://api.telegram.org/bot7229732085:AAFgY92Mq6OyviShR-NuYlQ50Hs4BuJ2Uog/sendMessage
+2025-05-05 01:03:35,206 - werkzeug - INFO - 172.17.0.1 - - [05/May/2025 01:03:35] "POST /tts HTTP/1.1" 200 -

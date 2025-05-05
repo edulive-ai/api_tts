@@ -131,6 +131,9 @@ def normalize_vietnamese_text(text):
             .replace('.', ",")
             .replace('?', ",")
             .replace('!', ",")
+            .replace('...', ",")
+            .replace(':', ",")
+            
         )
         return text
     except Exception as e:

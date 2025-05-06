@@ -13,6 +13,13 @@ import time
 import io
 import traceback
 import sys
+import re
+try:
+    from vinorm import TTSnorm
+    from TTS.tts.configs.xtts_config import XttsConfig
+    from TTS.tts.models.xtts import Xtts
+except Exception as e:
+    logger.error(f"Lỗi import: {e}")
 
 # Thiết lập logging
 log_dir = "./logs"
@@ -39,13 +46,6 @@ console_handler.setFormatter(formatter)
 # Thêm handlers vào logger
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
-
-try:
-    from vinorm import TTSnorm
-    from TTS.tts.configs.xtts_config import XttsConfig
-    from TTS.tts.models.xtts import Xtts
-except Exception as e:
-    logger.error(f"Lỗi import: {e}")
 
 app = Flask(__name__)
 
@@ -128,12 +128,11 @@ def normalize_vietnamese_text(text):
             .replace("*", "nhân")
             .replace("/", "chia")
             .replace("=", "bằng")
-            .replace('.', ",")
-            .replace('?', ",")
-            .replace('!', ",")
-            .replace('...', ",")
-            .replace(':', ",")
-            
+            # .replace('.', ",")
+            # .replace('?', ",")
+            # .replace('!', ",")
+            # .replace('...', ",")
+            # .replace(':', ",")
         )
         return text
     except Exception as e:
@@ -142,7 +141,7 @@ def normalize_vietnamese_text(text):
 
 def run_tts(model, lang, tts_text, normalize_text=True):
     """
-    Chạy chuyển đổi văn bản thành giọng nói
+    Chạy chuyển đổi văn bản thành giọng nói với điều kiện mỗi đoạn phải có ít nhất 10 từ
     """
     global gpt_cond_latent, speaker_embedding
     
@@ -158,12 +157,94 @@ def run_tts(model, lang, tts_text, normalize_text=True):
         except Exception as e:
             logger.error(f"Lỗi chuẩn hoá: {e}")
 
-    if lang in ["ja", "zh-cn"]:
-        tts_texts = tts_text.split("。")
+    # Kiểm tra toàn bộ input có ít hơn 10 từ không
+    total_word_count = len(tts_text.split())
+    if total_word_count < 10:
+        logger.info(f"Văn bản đầu vào chỉ có {total_word_count} từ, giữ nguyên không chia")
+        tts_texts = [tts_text]
     else:
-        tts_texts = sent_tokenize(tts_text)
+        if lang in ["ja", "zh-cn"]:
+            raw_sentences = tts_text.split("。")
+        else:
+            # Chia văn bản thành các câu
+            raw_sentences = sent_tokenize(tts_text)
+            
+        # Khởi tạo danh sách để lưu các đoạn đã xử lý
+        tts_texts = []
+        current_chunk = ""
+        
+        for i, sentence in enumerate(raw_sentences):
+            # Nếu không có đoạn hiện tại, bắt đầu với câu hiện tại
+            if not current_chunk:
+                current_chunk = sentence
+            else:
+                # Kiểm tra xem đây có phải là câu cuối cùng không
+                is_last_sentence = (i == len(raw_sentences) - 1)
+                
+                # Đếm số từ trong đoạn hiện tại và câu hiện tại
+                word_count_current = len(current_chunk.split())
+                word_count_sentence = len(sentence.split())
+                word_count_combined = word_count_current + word_count_sentence
+                
+                # Nếu là câu cuối cùng, xử lý đặc biệt để đảm bảo không còn đoạn nào dưới 10 từ
+                if is_last_sentence:
+                    # Nếu ghép lại vẫn dưới 10 từ hoặc đoạn hiện tại đã dưới 10 từ, luôn ghép
+                    if word_count_combined < 10 or word_count_current < 10:
+                        current_chunk += " " + sentence
+                        tts_texts.append(current_chunk)
+                    else:
+                        # Nếu đoạn hiện tại và câu cuối đều đủ 10 từ trở lên, tách riêng
+                        if word_count_current >= 10 and word_count_sentence >= 10:
+                            tts_texts.append(current_chunk)
+                            tts_texts.append(sentence)
+                        else:
+                            # Đoạn hiện tại đủ 10 từ, nhưng câu cuối không đủ, ghép vào đoạn cuối cùng
+                            tts_texts.append(current_chunk)
+                            
+                            # Ghép câu cuối vào đoạn trước đó nếu có
+                            if tts_texts:
+                                tts_texts[-1] += " " + sentence
+                            else:
+                                tts_texts.append(sentence)
+                else:
+                    # Nếu đoạn hiện tại đã có ít nhất 10 từ, lưu và bắt đầu đoạn mới
+                    if word_count_current >= 10:
+                        tts_texts.append(current_chunk)
+                        current_chunk = sentence
+                    else:
+                        # Nếu đoạn hiện tại có ít hơn 10 từ, ghép với câu tiếp theo
+                        current_chunk += " " + sentence
+        
+        # Kiểm tra nếu còn đoạn chưa được thêm vào
+        if current_chunk and current_chunk not in tts_texts:
+            # Nếu đoạn cuối ít hơn 10 từ và có đoạn trước đó, ghép vào đoạn cuối cùng
+            word_count_last = len(current_chunk.split())
+            if word_count_last < 10 and tts_texts:
+                tts_texts[-1] += " " + current_chunk
+            else:
+                tts_texts.append(current_chunk)
         
     logger.info(f"Văn bản được chia thành {len(tts_texts)} đoạn")
+
+    # Thay thế dấu chấm ở cuối câu bằng dấu phẩy
+    for i in range(len(tts_texts)):
+    # Cắt khoảng trắng ở hai đầu
+        text = tts_texts[i].strip()
+        
+        # Thay thế tất cả các dấu câu thành dấu phẩy
+        text = text.replace('.', ',')
+        text = text.replace('!', ',')
+        text = text.replace('?', ',')
+        text = text.replace(':', ',')
+        text = text.replace(';', ',')
+        
+        # Cập nhật lại đoạn
+        tts_texts[i] = text
+
+    # In thông tin về số từ trong mỗi đoạn
+    for i, text in enumerate(tts_texts):
+        word_count = len(text.split())
+        logger.info(f"Đoạn {i+1}: {word_count} từ")
 
     wav_chunks = []
     for i, text in enumerate(tts_texts):
@@ -289,27 +370,6 @@ def text_to_speech():
         logger.error(f"Lỗi trong endpoint text_to_speech: {e}")
         logger.error(traceback.format_exc())
         return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
-
-# Endpoint để kiểm tra xem server có hoạt động không
-@app.route('/status', methods=['GET'])
-def status():
-    logger.info("Nhận yêu cầu kiểm tra status")
-    return jsonify({
-        "status": "running",
-        "model_loaded": vixtts_model is not None,
-        "embeddings_loaded": speaker_embedding is not None and gpt_cond_latent is not None,
-        "python_version": sys.version,
-        "torch_version": torch.__version__,
-        "numpy_version": np.__version__,
-        "cuda_available": torch.cuda.is_available(),
-        "cuda_device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0
-    })
-
-# Endpoint đơn giản để kiểm tra
-@app.route('/ping', methods=['GET'])
-def ping():
-    logger.debug("Nhận yêu cầu ping")
-    return "pong"
 
 def initialize():
     """Khởi tạo mô hình và speaker embeddings khi server bắt đầu"""

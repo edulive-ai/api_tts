@@ -156,6 +156,22 @@ def run_tts(model, lang, tts_text, normalize_text=True):
             logger.info(f"Văn bản sau khi chuẩn hoá: {tts_text}")
         except Exception as e:
             logger.error(f"Lỗi chuẩn hoá: {e}")
+    
+    # Hàm xóa các icon và ký tự không phải text/dấu câu
+    def clean_non_text(text):
+        # Giữ lại chữ cái, số, dấu câu, và khoảng trắng chuẩn
+        allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?:;-()[]\"' \n\tàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ")
+        result = ""
+        for char in text:
+            if char in allowed_chars:
+                result += char
+            else:
+                result += " "  # Thay thế các ký tự không hợp lệ bằng khoảng trắng
+        
+        # Xử lý khoảng trắng dư thừa
+        result = " ".join(result.split())
+        
+        return result
             
     # Hàm đếm từ mà không tính dấu câu
     def count_words(text):
@@ -165,6 +181,10 @@ def run_tts(model, lang, tts_text, normalize_text=True):
         # Tách và đếm các từ không rỗng
         words = [word for word in text.split() if word.strip()]
         return len(words)
+
+    # Xóa các icon và ký tự không phải text/dấu câu
+    tts_text = clean_non_text(tts_text)
+    logger.info(f"Văn bản sau khi loại bỏ icon: {tts_text}")
 
     # Kiểm tra toàn bộ input có ít hơn 10 từ không
     total_word_count = count_words(tts_text)

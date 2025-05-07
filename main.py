@@ -156,9 +156,18 @@ def run_tts(model, lang, tts_text, normalize_text=True):
             logger.info(f"Văn bản sau khi chuẩn hoá: {tts_text}")
         except Exception as e:
             logger.error(f"Lỗi chuẩn hoá: {e}")
+            
+    # Hàm đếm từ mà không tính dấu câu
+    def count_words(text):
+        # Loại bỏ các dấu câu phổ biến trước khi đếm từ
+        for punct in ['.', ',', '!', '?', ':', ';', '-', '(', ')', '[', ']', '"', "'", '...']:
+            text = text.replace(punct, ' ')
+        # Tách và đếm các từ không rỗng
+        words = [word for word in text.split() if word.strip()]
+        return len(words)
 
     # Kiểm tra toàn bộ input có ít hơn 10 từ không
-    total_word_count = len(tts_text.split())
+    total_word_count = count_words(tts_text)
     if total_word_count < 10:
         logger.info(f"Văn bản đầu vào chỉ có {total_word_count} từ, giữ nguyên không chia")
         tts_texts = [tts_text]
@@ -181,9 +190,9 @@ def run_tts(model, lang, tts_text, normalize_text=True):
                 # Kiểm tra xem đây có phải là câu cuối cùng không
                 is_last_sentence = (i == len(raw_sentences) - 1)
                 
-                # Đếm số từ trong đoạn hiện tại và câu hiện tại
-                word_count_current = len(current_chunk.split())
-                word_count_sentence = len(sentence.split())
+                # Đếm số từ trong đoạn hiện tại và câu hiện tại (không tính dấu câu)
+                word_count_current = count_words(current_chunk)
+                word_count_sentence = count_words(sentence)
                 word_count_combined = word_count_current + word_count_sentence
                 
                 # Nếu là câu cuối cùng, xử lý đặc biệt để đảm bảo không còn đoạn nào dưới 10 từ
@@ -192,20 +201,26 @@ def run_tts(model, lang, tts_text, normalize_text=True):
                     if word_count_combined < 10 or word_count_current < 10:
                         current_chunk += " " + sentence
                         tts_texts.append(current_chunk)
+                        current_chunk = ""  # Đặt lại current_chunk để tránh xử lý lại
                     else:
                         # Nếu đoạn hiện tại và câu cuối đều đủ 10 từ trở lên, tách riêng
                         if word_count_current >= 10 and word_count_sentence >= 10:
                             tts_texts.append(current_chunk)
                             tts_texts.append(sentence)
+                            current_chunk = ""  # Đặt lại current_chunk để tránh xử lý lại
                         else:
-                            # Đoạn hiện tại đủ 10 từ, nhưng câu cuối không đủ, ghép vào đoạn cuối cùng
+                            # Đoạn hiện tại đủ 10 từ, nhưng câu cuối không đủ
                             tts_texts.append(current_chunk)
                             
-                            # Ghép câu cuối vào đoạn trước đó nếu có
-                            if tts_texts:
-                                tts_texts[-1] += " " + sentence
+                            # Câu cuối không đủ 10 từ, ghép vào đoạn trước đó nếu có
+                            if len(tts_texts) > 1:  # Nếu có ít nhất 2 đoạn
+                                # Ghép vào đoạn trước đó, không phải đoạn vừa thêm
+                                tts_texts[-2] += " " + sentence
                             else:
-                                tts_texts.append(sentence)
+                                # Nếu chỉ có 1 đoạn, thì ghép vào đoạn đó
+                                tts_texts[-1] += " " + sentence
+                            
+                            current_chunk = ""  # Đặt lại current_chunk để tránh xử lý lại
                 else:
                     # Nếu đoạn hiện tại đã có ít nhất 10 từ, lưu và bắt đầu đoạn mới
                     if word_count_current >= 10:
@@ -216,19 +231,27 @@ def run_tts(model, lang, tts_text, normalize_text=True):
                         current_chunk += " " + sentence
         
         # Kiểm tra nếu còn đoạn chưa được thêm vào
-        if current_chunk and current_chunk not in tts_texts:
-            # Nếu đoạn cuối ít hơn 10 từ và có đoạn trước đó, ghép vào đoạn cuối cùng
-            word_count_last = len(current_chunk.split())
-            if word_count_last < 10 and tts_texts:
-                tts_texts[-1] += " " + current_chunk
-            else:
-                tts_texts.append(current_chunk)
+        if current_chunk:
+            # Kiểm tra xem current_chunk có phải là phần cuối của đoạn cuối cùng không
+            is_already_added = False
+            if tts_texts:
+                # Kiểm tra nếu đoạn cuối cùng kết thúc bằng current_chunk
+                if tts_texts[-1].strip().endswith(current_chunk.strip()):
+                    is_already_added = True
+            
+            if not is_already_added:
+                # Nếu đoạn cuối ít hơn 10 từ và có đoạn trước đó, ghép vào đoạn cuối cùng
+                word_count_last = count_words(current_chunk)
+                if word_count_last < 10 and tts_texts:
+                    tts_texts[-1] += " " + current_chunk
+                else:
+                    tts_texts.append(current_chunk)
         
     logger.info(f"Văn bản được chia thành {len(tts_texts)} đoạn")
 
     # Thay thế dấu chấm ở cuối câu bằng dấu phẩy
     for i in range(len(tts_texts)):
-    # Cắt khoảng trắng ở hai đầu
+        # Cắt khoảng trắng ở hai đầu
         text = tts_texts[i].strip()
         
         # Thay thế tất cả các dấu câu thành dấu phẩy
@@ -241,10 +264,10 @@ def run_tts(model, lang, tts_text, normalize_text=True):
         # Cập nhật lại đoạn
         tts_texts[i] = text
 
-    # In thông tin về số từ trong mỗi đoạn
+    # In thông tin về số từ trong mỗi đoạn (không tính dấu câu)
     for i, text in enumerate(tts_texts):
-        word_count = len(text.split())
-        logger.info(f"Đoạn {i+1}: {word_count} từ")
+        word_count = count_words(text)
+        logger.info(f"Đoạn {i+1}: {word_count} từ (không tính dấu)")
 
     wav_chunks = []
     for i, text in enumerate(tts_texts):

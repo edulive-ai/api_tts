@@ -264,8 +264,8 @@ def run_tts(text, lang="vi", normalize_text=True):
                 speaker_embedding=tts_engine.speaker_embedding,
                 temperature=0.3,
                 length_penalty=1.0,
-                repetition_penalty=10.0,
-                top_k=30,
+                repetition_penalty=5.0,
+                top_k=50,
                 top_p=0.85,
             )
             
@@ -309,7 +309,26 @@ def run_tts(text, lang="vi", normalize_text=True):
         logger.error(f"Error saving audio: {e}")
         logger.error(traceback.format_exc())
         raise
-
+@app.route('/reset', methods=['POST'])
+def reset_model():
+    """API endpoint to reset the TTS model in case of errors"""
+    try:
+        logger.info("Resetting TTS model...")
+        
+        # Clear GPU cache
+        clear_gpu_cache()
+        
+        # Reinitialize the model
+        if initialize():
+            logger.info("TTS model reset successfully")
+            return jsonify({"status": "success", "message": "TTS model reset successfully"}), 200
+        else:
+            logger.error("Failed to reset TTS model")
+            return jsonify({"status": "error", "message": "Failed to reset TTS model"}), 500
+    except Exception as e:
+        logger.error(f"Error resetting TTS model: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
 @app.route('/tts', methods=['POST'])
 def text_to_speech():
     """API endpoint for text-to-speech conversion"""

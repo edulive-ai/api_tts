@@ -4,6 +4,7 @@ Main application that uses the Vietnamese Text-to-Speech module
 from flask import Flask, request, jsonify, make_response
 import module_tts as vixtts
 import logging
+from flask import g
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -67,7 +68,30 @@ def text_to_speech():
     except Exception as e:
         logger.error(f"Error in text_to_speech endpoint: {e}")
         return jsonify({"error": str(e)}), 500
+        # Middleware to track consecutive 500 errors
+@app.before_request
+def track_errors():
+    if not hasattr(g, 'error_count'):
+        g.error_count = 0
 
+@app.after_request
+def handle_errors(response):
+    if response.status_code == 500:
+        g.error_count += 1
+        logger.warning(f"Consecutive 500 errors: {g.error_count}")
+        if g.error_count >= 2:
+            logger.info("Triggering model reset due to consecutive 500 errors...")
+            try:
+                if vixtts.reset_tts():
+                    logger.info("Model reset successfully after consecutive errors")
+                    g.error_count = 0
+                else:
+                    logger.error("Failed to reset model after consecutive errors")
+            except Exception as e:
+                logger.error(f"Error during model reset: {e}")
+    else:
+        g.error_count = 0
+    return response
 if __name__ == '__main__':
     logger.info("=" * 50)
     logger.info("Starting TTS server")

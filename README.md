@@ -62,9 +62,7 @@ curl -X POST https://intern.nnq962.pro/tts \
 ```
 
 You can modify the "text" field to customize the speech content.
+------------------------------------------------------------------------------------------------
+# Using TTS as a module
 
-## Notes
-
-- The API endpoint is hosted at `https://intern.nnq962.pro/tts`
-- The output is saved as a WAV file
-- Make sure to include Vietnamese tone marks for proper pronunciation
+focus file main_tts.py to using tts as a module 
